@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Koding Festival - Smart Editor UI</title>
+    <title>Koding Festival - Smart Editor & Chatbot Fixed</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
@@ -35,12 +35,13 @@
         .chat-header { background: #4f46e5; color: white; padding: 10px 14px; border-radius: 15px 15px 0 0; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
         .chat-window { background: white; height: 350px; border: 1px solid #e5e7eb; border-top: none; display: flex; flex-direction: column; border-radius: 0 0 15px 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
         .chat-messages { flex-grow: 1; padding: 12px; overflow-y: auto; font-size: 11px; display: flex; flex-direction: column; gap: 8px; }
-        .msg { padding: 8px 12px; border-radius: 12px; max-width: 85%; line-height: 1.4; }
+        .msg { padding: 8px 12px; border-radius: 12px; max-width: 85%; line-height: 1.4; word-wrap: break-word; }
         .bot-msg { background: #f3f4f6; color: #374151; align-self: flex-start; }
         .user-msg { background: #4f46e5; color: white; align-self: flex-end; }
         .chat-input-area { border-top: 1px solid #eee; padding: 10px; display: flex; gap: 6px; }
         .chat-input-area input { flex-grow: 1; border: 1px solid #e5e7eb; padding: 8px 12px; border-radius: 20px; font-size: 11px; outline: none; }
         .chat-input-area button { background: #4f46e5; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .chat-list { margin-top: 4px; padding-left: 15px; list-style-type: disc; }
     </style>
 </head>
 <body class="h-screen flex flex-col">
@@ -53,7 +54,6 @@
     </header>
 
     <main class="flex-grow relative flex items-center justify-center p-4">
-        
         <section class="slide active" id="slide-1">
             <div class="text-center">
                 <p class="text-indigo-600 font-extrabold text-sm tracking-[0.2em] uppercase mb-1">SMP IT Ummul Quro Depok</p>
@@ -78,13 +78,13 @@
         <section class="slide" id="slide-11">
             <div class="pastel-card !max-w-xl !p-6">
                 <h2 class="text-2xl font-black mb-1">Pengumpulan Tugas & File 🚀</h2>
-                <p class="text-[11px] text-slate-400 mb-4 font-bold uppercase tracking-wider">Unggah file .aia dan .apk ke folder masing-masing.</p>
+                <p class="text-[11px] text-slate-400 mb-4 font-bold uppercase tracking-wider">Unggah file .aia dan .apk ke Drive.</p>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
                     <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
                         <p class="text-[10px] font-black text-indigo-600 mb-2 uppercase">Isi Folder:</p>
                         <ul class="text-[11px] space-y-1 text-slate-600 font-semibold">
-                            <li>Link MIT Gallery</li>
-                            <li>Presentasi (PPT/Canva)</li>
+                            <li>Link App (MIT Gallery)</li>
+                            <li>PPT/Canva Presentation</li>
                             <li>Video Demo Aplikasi</li>
                         </ul>
                     </div>
@@ -117,7 +117,9 @@
                 <i id="chat-toggle-icon" class="fa-solid fa-chevron-up text-[9px]"></i>
             </div>
             <div id="chat-body" class="chat-window" style="display: none;">
-                <div id="chat-messages" class="chat-messages"></div>
+                <div id="chat-messages" class="chat-messages">
+                    <div class="msg bot-msg">Halo! Ada yang bisa saya bantu terkait tugas?</div>
+                </div>
                 <div class="chat-input-area">
                     <input type="text" id="userInput" placeholder="Tanya..." onkeypress="handleKeyPress(event)">
                     <button onclick="sendMessage()"><i class="fa-solid fa-paper-plane text-[10px]"></i></button>
@@ -157,20 +159,15 @@
             document.getElementById('slide-12')
         ];
 
-        // --- LOGIKA UI CONTROL (KONDISIONAL) ---
+        // --- ADMIN & EDITOR LOGIC ---
         function updateControlsUI() {
             const adminBtn = document.getElementById('admin-toggle');
             const saveBtn = document.getElementById('save-btn');
-
-            // Slide 1, 11, 12: Tampilkan Gembok Abu-abu
             if (currentSlide === 0 || currentSlide === 10 || currentSlide === 11) {
                 adminBtn.style.display = 'flex';
-                saveBtn.style.display = 'none'; // Sembunyikan hijau meskipun ada perubahan
-            } 
-            // Slide 2 - 10: Tampilkan Hijau (Hanya jika ada input)
-            else {
+                saveBtn.style.display = 'none';
+            } else {
                 adminBtn.style.display = 'none';
-                // Note: saveBtn display diatur oleh event listener 'input'
             }
         }
 
@@ -188,7 +185,10 @@
                 isAdmin = false;
                 alert("Mode Admin Dikunci.");
             }
+            applyAdminUI();
+        }
 
+        function applyAdminUI() {
             const btn = document.getElementById('admin-toggle');
             const icon = document.getElementById('admin-icon');
             const text = document.getElementById('admin-text');
@@ -208,11 +208,8 @@
         }
 
         document.addEventListener('input', (e) => {
-            if (e.target.hasAttribute('contenteditable')) {
-                // Tombol hijau hanya muncul di slide 2-10
-                if (currentSlide >= 1 && currentSlide <= 9) {
-                    document.getElementById('save-btn').style.display = 'flex';
-                }
+            if (e.target.hasAttribute('contenteditable') && currentSlide >= 1 && currentSlide <= 9) {
+                document.getElementById('save-btn').style.display = 'flex';
             }
         });
 
@@ -223,12 +220,14 @@
                 groups[i].a = document.getElementById('appName').innerText;
                 groups[i].s = document.getElementById('studentNames').innerText;
                 groups[i].d = document.getElementById('appDesc').innerText.replace(/"/g, '');
+                alert("Data kelompok berhasil disimpan.");
+            } else {
+                alert("Perubahan slide admin disimpan.");
             }
-            alert("Perubahan disimpan.");
             document.getElementById('save-btn').style.display = 'none';
         }
 
-        // --- NAVIGASI & SLIDE ---
+        // --- NAVIGATION ---
         function updateSlide() {
             allSlides.forEach(s => s.classList.remove('active'));
             if (currentSlide === 0) {
@@ -246,23 +245,73 @@
             } else {
                 allSlides[3].classList.add('active');
             }
-
             document.getElementById('prevBtn').disabled = currentSlide === 0;
             document.getElementById('nextBtn').disabled = currentSlide === totalSlidesCount - 1;
             document.getElementById('slideIndicator').innerText = `Slide ${(currentSlide + 1).toString().padStart(2, '0')} / 12`;
-            
             document.getElementById('save-btn').style.display = 'none';
             updateControlsUI();
         }
 
         document.getElementById('nextBtn').addEventListener('click', () => { if(currentSlide < 11) { currentSlide++; updateSlide(); } });
         document.getElementById('prevBtn').addEventListener('click', () => { if(currentSlide > 0) { currentSlide--; updateSlide(); } });
-        
+
+        // --- CHATBOT SYSTEM ---
         function toggleChat() {
             const body = document.getElementById('chat-body');
-            body.style.display = body.style.display === "none" ? "flex" : "none";
+            const icon = document.getElementById('chat-toggle-icon');
+            if (body.style.display === "none") {
+                body.style.display = "flex";
+                icon.className = "fa-solid fa-chevron-down text-[9px]";
+            } else {
+                body.style.display = "none";
+                icon.className = "fa-solid fa-chevron-up text-[9px]";
+            }
         }
 
+        function handleKeyPress(e) { if (e.key === 'Enter') sendMessage(); }
+
+        function sendMessage() {
+            const input = document.getElementById('userInput');
+            const msg = input.value.trim();
+            if (!msg) return;
+
+            addMessage(msg, 'user-msg', false);
+            input.value = '';
+
+            setTimeout(() => {
+                const low = msg.toLowerCase();
+                let resp = "Maaf, saya hanya bisa menjawab pertanyaan seputar tugas Koding Festival.";
+                let isHtml = false;
+
+                if (low.includes("tugas") || low.includes("kumpul") || low.includes("format")) {
+                    resp = `Kumpulkan file ke Google Drive dengan isi:
+                        <ul class="chat-list">
+                            <li>File .aia & .apk</li>
+                            <li>Link MIT Gallery</li>
+                            <li>PPT & Video Demo</li>
+                        </ul><br>Buka akses Drive-nya ya!`;
+                    isHtml = true;
+                } else if (low.includes("halo") || low.includes("hi") || low.includes("p")) {
+                    resp = "Halo! Ada yang bisa saya bantu terkait tugas?";
+                } else if (low.includes("admin") || low.includes("password")) {
+                    resp = "Untuk mode admin, silakan hubungi pengelola website.";
+                }
+
+                addMessage(resp, 'bot-msg', isHtml);
+            }, 500);
+        }
+
+        function addMessage(content, className, isHtml) {
+            const container = document.getElementById('chat-messages');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `msg ${className}`;
+            if (isHtml) msgDiv.innerHTML = content;
+            else msgDiv.innerText = content;
+            container.appendChild(msgDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Initialize
         updateSlide();
     </script>
 </body>
